@@ -59,9 +59,7 @@ const postBlog = async (blog) => {
   }
   return data;
 };
-const loginToken = JSON.parse(localStorage.getItem("login_token"));
-const { accessToken } = loginToken.data;
-console.log(accessToken);
+
 const getBlogs = async (params = {}) => {
   let query = new URLSearchParams(params).toString();
   if (query) {
