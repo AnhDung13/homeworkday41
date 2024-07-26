@@ -8,9 +8,8 @@ const content = document.querySelector(".content");
 document.body.addEventListener("submit", async (e) => {
   if (e.target.classList.contains("post-form")) {
     e.preventDefault();
-    const formPostBlog = e.target;
-    const { title, content } = Object.fromEntries([...new FormData(e.target)]);
-    if (!title) {
+    const blog = Object.fromEntries([...new FormData(e.target)]);
+    if (!blog.title) {
       Swal.fire({
         position: "top-end",
         icon: "error",
@@ -18,7 +17,7 @@ document.body.addEventListener("submit", async (e) => {
         showConfirmButton: false,
         timer: 1500,
       });
-    } else if (!content) {
+    } else if (!blog.content) {
       Swal.fire({
         position: "top-end",
         icon: "error",
@@ -27,31 +26,32 @@ document.body.addEventListener("submit", async (e) => {
         timer: 1500,
       });
     } else {
-      const postData = await postBlog({ title, content });
-      console.log(postData);
-      // if (!postData) {
-      //   Swal.fire({
-      //     position: "top-end",
-      //     icon: "error",
-      //     title: "Xảy ra sự cố",
-      //     showConfirmButton: false,
-      //     timer: 1500,
-      //   });
-      // } else {
-      //   Swal.fire({
-      //     position: "top-end",
-      //     icon: "success",
-      //     title: "Đăng bài thành công",
-      //     showConfirmButton: false,
-      //     timer: 1500,
-      //   });
-      //   getBlogs(params);
-      // }
+      const postData = await postBlog(blog);
+      if (!postData) {
+        Swal.fire({
+          position: "top-end",
+          icon: "error",
+          title: "Xảy ra sự cố",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      } else {
+        Swal.fire({
+          position: "top-end",
+          icon: "success",
+          title: "Đăng bài thành công",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        getBlogs(params);
+      }
     }
   }
 });
 
 const postBlog = async (blog) => {
+  const loginToken = JSON.parse(localStorage.getItem("login_token"));
+  const { accessToken } = loginToken.data;
   httpClient.token = accessToken;
   const { response, data } = await httpClient.post("/blogs", blog);
   if (!response.ok) {
@@ -65,11 +65,10 @@ const getBlogs = async (params = {}) => {
   if (query) {
     query = "?" + query;
   }
-  console.log(query);
   const { data } = await httpClient.get(`/blogs${query}`);
-  const blogData = data.data;
+  const blogData = await data;
 
-  renderBlogs(blogData);
+  renderBlogs(blogData.data);
   window.addEventListener("scroll", handleScroll);
 };
 

@@ -1,12 +1,16 @@
 import { httpClient } from "../module/client.js";
-const formLogin = document.querySelector(".form-login");
+const formRegister = document.querySelector(".form-register");
 
-formLogin.addEventListener("submit", async (e) => {
+formRegister.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const { email, password } = Object.fromEntries([...new FormData(e.target)]);
+  const { name, email, password } = Object.fromEntries([
+    ...new FormData(e.target),
+  ]);
   const errors = {};
   const regexEmail = /^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/;
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])[a-zA-Z\d]{8,30}$/;
+  if (!name) {
+    errors.name = "Vui lòng nhập tên của bạn";
+  }
   if (!email) {
     errors.email = "Vui lòng nhập email";
   } else if (!regexEmail.test(email)) {
@@ -23,14 +27,14 @@ formLogin.addEventListener("submit", async (e) => {
   } else if (!/[A-Z]/.test(password)) {
     errors.password = "Mật khẩu phải chứa ít nhất 1 chữ cái hoa";
   }
-  const errorElList = formLogin.querySelectorAll(".error");
+  const errorElList = formRegister.querySelectorAll(".error");
   errorElList.forEach((errorEl) => {
     errorEl.innerText = "";
   });
   if (Object.keys(errors).length) {
     Object.keys(errors).forEach((key) => {
       const error = errors[key];
-      const errorEl = formLogin.querySelector(`.error-${key}`);
+      const errorEl = formRegister.querySelector(`.error-${key}`);
       if (errorEl) {
         errorEl.innerText = error;
       }
@@ -38,30 +42,42 @@ formLogin.addEventListener("submit", async (e) => {
   } else {
     //Call API
     setLoadingBtn();
-    const loginData = await login({
+    const registerData = await login({
       email,
       password,
+      name,
     });
     removeLoadingBtn();
-    if (!loginData) {
+    if (!registerData) {
       Swal.fire({
         position: "center",
         icon: "error",
-        title: "Email hoặc mật khẩu không chính xác",
+        title: "Email đã tồn tại",
         showConfirmButton: false,
         timer: 2000,
       });
       removeLoadingBtn();
     } else {
-      localStorage.setItem("login_token", JSON.stringify(loginData));
-      window.location.href = "../index.html";
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Đăng ký thành công",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      setTimeout(() => {
+        window.location.href = "./login.html";
+      }, 1600);
     }
   }
 });
 
-const login = async (loginData) => {
+const login = async (registerData) => {
   try {
-    const { response, data } = await httpClient.post(`/auth/login`, loginData);
+    const { response, data } = await httpClient.post(
+      `/auth/register`,
+      registerData
+    );
     if (!response.ok) {
       return false;
     }
@@ -70,12 +86,12 @@ const login = async (loginData) => {
 };
 
 const setLoadingBtn = () => {
-  const btn = formLogin.querySelector(".btn");
+  const btn = formRegister.querySelector(".regist");
   btn.disabled = true;
   btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span><span> Loading...</span>`;
 };
 const removeLoadingBtn = () => {
-  const btn = formLogin.querySelector(".btn");
-  btn.innerText = "Đăng nhập";
+  const btn = formRegister.querySelector(".regist");
+  btn.innerText = "Đăng ký";
   btn.disabled = false;
 };

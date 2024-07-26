@@ -4,6 +4,54 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
   </head>
-  <body></body>
+  <body class="bg-dark">
+    <a class="text-success fs-4" href="../index.html"> Về trang chủ</a>
+    <div
+      class="position-absolute top-50 start-50 translate-middle"
+      style="width: 300px"
+    >
+      <h1 class="text-success text-center mb-3">Register</h1>
+      <div class="msg"></div>
+      <form class="form-register d-flex flex-column gap-2" action="">
+        <input
+          type="text"
+          name="name"
+          class="form-control"
+          placeholder="User Name"
+        />
+        <span class="text-danger error error-name"></span>
+        <input
+          type="email"
+          name="email"
+          class="form-control"
+          placeholder="Email"
+        />
+        <span class="text-danger error error-email"></span>
+        <input
+          type="password"
+          name="password"
+          class="form-control"
+          placeholder="Password"
+        />
+        <span class="text-danger error error-password"></span>
+        <div class="d-flex justify-content-around">
+          <a href="./login.html" class="btn btn-success px-3 py-2">Login</a>
+          <button type="submit" class="regist btn btn-success px-3 py-2">
+            Register
+          </button>
+        </div>
+      </form>
+    </div>
+    <script type="module" src="../js/handleRegister.js"></script>
+  </body>
 </html>
