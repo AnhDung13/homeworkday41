@@ -53,7 +53,13 @@ formLogin.addEventListener("submit", async (e) => {
       });
       removeLoadingBtn();
     } else {
-      localStorage.setItem("login_token", JSON.stringify(loginData));
+      localStorage.setItem(
+        "login_token",
+        JSON.stringify({
+          accessToken: loginData.data.accessToken,
+          refreshToken: loginData.data.refreshToken,
+        })
+      );
       window.location.href = "../index.html";
     }
   }

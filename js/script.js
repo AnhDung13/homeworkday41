@@ -9,6 +9,8 @@ document.body.addEventListener("submit", async (e) => {
   if (e.target.classList.contains("post-form")) {
     e.preventDefault();
     const blog = Object.fromEntries([...new FormData(e.target)]);
+    const title = e.target.querySelector(".title");
+    const contentChild = e.target.querySelector(".content");
     if (!blog.title) {
       Swal.fire({
         position: "top-end",
@@ -31,7 +33,7 @@ document.body.addEventListener("submit", async (e) => {
         Swal.fire({
           position: "top-end",
           icon: "error",
-          title: "Xảy ra sự cố",
+          title: "Xảy ra sự cố vui lòng thử lại sau giây lát",
           showConfirmButton: false,
           timer: 1500,
         });
@@ -43,6 +45,10 @@ document.body.addEventListener("submit", async (e) => {
           showConfirmButton: false,
           timer: 1500,
         });
+        params.page = 1;
+        content.innerHTML = "";
+        title.value = "";
+        contentChild.value = "";
         getBlogs(params);
       }
     }
@@ -50,14 +56,15 @@ document.body.addEventListener("submit", async (e) => {
 });
 
 const postBlog = async (blog) => {
-  const loginToken = JSON.parse(localStorage.getItem("login_token"));
-  const { accessToken } = loginToken.data;
-  httpClient.token = accessToken;
-  const { response, data } = await httpClient.post("/blogs", blog);
-  if (!response.ok) {
-    return false;
-  }
-  return data;
+  try {
+    const { accessToken } = JSON.parse(localStorage.getItem("login_token"));
+    httpClient.token = accessToken;
+    const { response, data } = await httpClient.post("/blogs", blog);
+    if (!response.ok) {
+      return false;
+    }
+    return data;
+  } catch {}
 };
 
 const getBlogs = async (params = {}) => {
@@ -72,6 +79,27 @@ const getBlogs = async (params = {}) => {
   window.addEventListener("scroll", handleScroll);
 };
 
+const getProfile = async () => {
+  try {
+    const { accessToken } = JSON.parse(localStorage.getItem("login_token"));
+    httpClient.token = accessToken;
+    const { response, data } = await httpClient.get("/users/profile");
+    if (!response.ok) {
+      throw new Error("Unauthorize");
+    }
+    return data;
+  } catch {
+    return false;
+  }
+};
+const showProfile = async () => {
+  const userData = await getProfile();
+  if (userData) {
+    document.querySelector(".user-name").innerText = userData.data.name;
+  } else {
+    renderHeader();
+  }
+};
 const renderBlogs = async (data) => {
   const blogs = `${data
     .map(({ title, content, userId }) => {
@@ -108,7 +136,7 @@ const renderBlogs = async (data) => {
   content.insertAdjacentHTML("beforeend", blogs);
 };
 
-const renderHeader = () => {
+const renderHeader = async () => {
   const status = localStorage.getItem("login_token") ? true : false;
   if (!status) {
     document.querySelector(
@@ -118,13 +146,11 @@ const renderHeader = () => {
         Sign in
       </a>`;
   } else {
-    const userData = JSON.parse(localStorage.getItem("login_token"));
-
     document.querySelector("header").innerHTML = `
     <div class="d-flex justify-content-between">
       <div>
       <h1 class="text-success fw-bold">Blogger</h1>
-      <p class="fs-2 text text-white fw-bold text-decoration-underline">${userData.data.name}</p>
+      <p class="fs-2 text text-white fw-bold text-decoration-underline user-name">Loading...</p>
       <form action="" class="post-form">
         <div class="form-box my-3">
           <label class="text-success fw-bold">Enter Your title</label>
@@ -153,10 +179,13 @@ const renderHeader = () => {
       </div>
        <button class="btn btn-danger sign-out px-5 py-4 h-25">Sign out</button>
     </div>
-   
     `;
+    showProfile();
     const signOutBtn = document.querySelector(".sign-out");
-    signOutBtn.addEventListener("click", () => {
+    signOutBtn.addEventListener("click", async () => {
+      const { accessToken } = JSON.parse(localStorage.getItem("login_token"));
+      httpClient.token = accessToken;
+      await httpClient.post("/auth/logout");
       localStorage.removeItem("login_token");
       window.location.href = "./components/login.html";
     });

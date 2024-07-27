@@ -34,14 +34,17 @@ export const httpClient = {
       //Lưu ý: Xử lý trường hợp nhiều request chạy đồng thời (Đã học ở buổi trước)
       if (this.token) {
         if (!this.refreshTokenPromise) {
-          this.refreshTokenPromise = this.getNewAccessToken();
+          this.refreshTokenPromise = await this.getNewAccessToken();
         }
-        const newToken = await this.refreshTokenPromise;
+        const newToken = this.refreshTokenPromise;
         if (!newToken) {
           return false;
         }
         //Thành công --> Lưu vào storage
-        localStorage.setItem("login_token", JSON.stringify(newToken));
+        localStorage.setItem(
+          "login_token",
+          JSON.stringify(newToken.data.token)
+        );
         this.token = newToken.access_token;
         return this.send(path, method, body, headers);
       }
@@ -49,15 +52,13 @@ export const httpClient = {
   },
   getNewAccessToken: async function () {
     try {
-      const loginToken = JSON.parse(localStorage.getItem("login_token"));
-      const { refreshToken } = loginToken.data;
-
+      const { refreshToken } = JSON.parse(localStorage.getItem("login_token"));
       const response = await fetch(`${this.serverApi}/auth/refresh-token`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ refreshToken }),
+        body: JSON.stringify({ refreshToken: refreshToken }),
       });
       if (!response.ok) {
         throw new Error("RefreshToken không hợp lệ");
