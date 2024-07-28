@@ -65,7 +65,7 @@ export const httpClient = {
       }
       return response.json();
     } catch (e) {
-      return false;
+      localStorage.removeItem("login_token");
     }
   },
   get: function (url, headers = {}) {
