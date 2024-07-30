@@ -102,7 +102,7 @@ const showProfile = async () => {
 };
 const renderBlogs = async (data) => {
   const blogs = `${data
-    .map(({ title, content, userId }) => {
+    .map(({ title, content, userId, createdAt }) => {
       let contentLink = "";
       if (content.includes("https://youtu")) {
         contentLink = content.split("/")[3];
@@ -113,21 +113,42 @@ const renderBlogs = async (data) => {
           console.log(contentLink);
         }
       }
+      createdAt = new Date(createdAt).getTime();
+      let currentTime = new Date().getTime();
+      let time = (currentTime - createdAt) / 1000;
+      let timePost = 0;
+      if (time / 60 >= 1 && time / 60 < 60) {
+        timePost = Math.floor(time / 60) + " phút trước";
+      } else if (time / 3600 >= 1 && time / 3600 < 24) {
+        timePost = Math.floor(time / 3600) + " giờ trước";
+      } else if (time / 86400 >= 1 && time / 84600 <= 31) {
+        timePost = Math.floor(time / 86400) + " ngày trước";
+      } else if (time / 2592000 >= 1 && time / 2592000 < 13) {
+        timePost = Math.floor(time / 2592000) + " tháng trước";
+      } else {
+        timePost = Math.floor(Math.abs(time)) + " giây trước";
+      }
       return `
       <section>
+          <div></div>
+          <div>    
+          <div class="d-flex align-items-center justify-content-between">
             <span class="user-name fs-2 text text-white fw-bold text-decoration-underline">${
               userId.name
-            }</span>
+            }</span> 
+            <i class="text-success" >${timePost}</i>
+            </div>
             <h3 class="title text fw-bold text-success">${title}</h3>
             ${
-              content.includes("you")
+              content.includes("yout")
                 ? `<iframe width="560" height="315" src="https://www.youtube.com/embed/${contentLink}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>`
-                : `<p class="text text-white fs-3 fw-bold">${content}</p>`
+                : `<p class="text text-white fs-3 fw-bold text-break">${content}</p>`
             }
             <a href="#" class="text-success border border-success px-4 py-1 rounded-pill my-3 d-block" style="width:fit-content"># ${userId.name
               .toLocaleLowerCase()
               .split(" ")
               .join("")}</a>
+          </div>  
           </section>
            <hr/>
     `;
