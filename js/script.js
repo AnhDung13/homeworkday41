@@ -125,10 +125,13 @@ const renderBlogs = async (data) => {
         timePost = Math.floor(time / 86400) + " ngày trước";
       } else if (time / 2592000 >= 1 && time / 2592000 < 13) {
         timePost = Math.floor(time / 2592000) + " tháng trước";
+      } else if (time / 31536000 >= 1) {
+        timePost = Math.floor(time / 31536000) + " năm trước";
       } else {
         timePost = Math.floor(Math.abs(time)) + " giây trước";
       }
       return `
+      
       <section>
           <div></div>
           <div>    
