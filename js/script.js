@@ -196,6 +196,7 @@ const renderHeader = async () => {
             style="width: 500px; height: 200px"
           ></textarea>
         </div>
+        <input type="date" class="form-control mb-3 date-picker"/>
         <button type="submit" class="btn btn-success px-5 py-4 text-black">
           Write New!
         </button>
@@ -212,6 +213,47 @@ const renderHeader = async () => {
       await httpClient.post("/auth/logout");
       localStorage.removeItem("login_token");
       window.location.href = "./components/login.html";
+    });
+    const datePicker = document.querySelector(".date-picker");
+    datePicker.addEventListener("change", (e) => {
+      e.preventDefault();
+
+      const currentDate = new Date();
+      const datePicked =
+        e.target.value +
+        " " +
+        currentDate.getHours() +
+        ":" +
+        currentDate.getMinutes() +
+        ":" +
+        currentDate.getSeconds();
+      const targetDate = new Date(datePicked).getTime();
+      let seconds = (targetDate - currentDate.getTime()) / 1000;
+      console.log(targetDate);
+      if (seconds < 0) {
+        Swal.fire({
+          position: "top-end",
+          icon: "error",
+          title: "Vui lòng chọn ngày khác",
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        e.target.value = "";
+      } else {
+        const days = Math.floor(seconds / 86400);
+        seconds = seconds - days * 86400;
+        const hours = Math.floor(seconds / 3600);
+        seconds = seconds - hours * 3600;
+        const minutes = Math.floor(seconds / 60);
+        seconds = Math.floor(seconds - minutes * 60);
+        Swal.fire({
+          position: "top-end",
+          icon: "success",
+          title: `Bài viết của bạn sẽ được đăng sau ${days} ngày ${hours} giờ ${minutes} phút ${seconds} giây`,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
     });
   }
 };
