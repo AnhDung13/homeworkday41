@@ -1,8 +1,11 @@
 import { httpClient } from "../module/client.js";
-const params = {
-  page: 1,
-};
-
+import {
+  params,
+  getBlogs,
+  postBlog,
+  showProfile,
+  handleLogout,
+} from "./callApi.js";
 const content = document.querySelector(".content");
 
 document.body.addEventListener("submit", async (e) => {
@@ -55,63 +58,57 @@ document.body.addEventListener("submit", async (e) => {
   }
 });
 
-const postBlog = async (blog) => {
-  try {
-    const { accessToken } = JSON.parse(localStorage.getItem("login_token"));
-    httpClient.token = accessToken;
-    const { response, data } = await httpClient.post("/blogs", blog);
-    if (!response.ok) {
-      return false;
-    }
-    return data;
-  } catch {}
-};
-
-const getBlogs = async (params = {}) => {
-  let query = new URLSearchParams(params).toString();
-  if (query) {
-    query = "?" + query;
-  }
-  const { data } = await httpClient.get(`/blogs${query}`);
-  const blogData = await data;
-
-  renderBlogs(blogData.data);
-  window.addEventListener("scroll", handleScroll);
-};
-
-const getProfile = async () => {
-  try {
-    const { accessToken } = JSON.parse(localStorage.getItem("login_token"));
-    httpClient.token = accessToken;
-    const { response, data } = await httpClient.get("/users/profile");
-    if (!response.ok) {
-      throw new Error("Unauthorize");
-    }
-    return data;
-  } catch {
-    return false;
-  }
-};
-const showProfile = async () => {
-  const userData = await getProfile();
-  if (userData) {
-    document.querySelector(".user-name").innerText = userData.data.name;
-  } else {
-    renderHeader();
-  }
-};
-const renderBlogs = async (data) => {
+export const renderBlogs = async (data) => {
   const blogs = `${data
     .map(({ title, content, userId, createdAt }) => {
-      let contentLink = "";
-      if (content.includes("https://youtu")) {
-        contentLink = content.split("/")[3];
-      } else if (content.includes("https://www.youtube")) {
-        contentLink = content.split("/")[3].split("=")[1];
-        if (contentLink !== undefined && contentLink.includes(" https:")) {
-          contentLink = contentLink.replace(" https:", "");
-          console.log(contentLink);
-        }
+      let renderedContent = content;
+      const ytPattern =
+        /^(?:https?:\/\/)?(?:(?:www|m)\.)?(youtu\.be\/|youtube\.com(?:\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=|shorts\/)|youtu\.be\/|embed\/|v\/|m\/|watch\?(?:[^=]+=[^&]+&)*?v=))([^"&?\/\s]{11})/gm;
+      let videoId = ytPattern.exec(content);
+      if (videoId) {
+        videoId = videoId[2];
+        renderedContent = renderedContent.replace(
+          ytPattern,
+          `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videoId}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>`
+        );
+      }
+      const emailPattern =
+        /(([a-zA-Z][a-zA-Z0-9-_.]+[a-zA-Z0-9])@(?:[a-zA-Z]|[a-zA-Z0-9-_]*[a-zA-Z0-9])\.(?:[a-zA-Z0-9-_]*[a-zA-Z0-9]\.)*[a-zA-Z]{2,})/g;
+      let email = content.match(emailPattern);
+      if (email) {
+        email = email[0];
+        renderedContent = renderedContent.replace(
+          emailPattern,
+          `<a href="mailto:${email}" target="_blank" class="text text-white">${email}</a>`
+        );
+      }
+      const urlPattern =
+        /[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=-]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g;
+      let url = content.match(urlPattern);
+      if (url) {
+        url = url
+          .filter((value) => !value.match(ytPattern))
+          .filter((value) => !value.match(emailPattern));
+        url.forEach((value) => {
+          if (value) {
+            renderedContent = renderedContent.replace(
+              value,
+              `<a href="${
+                value.includes("http") ? "" : "https://"
+              }${value}" target="_blank" class="text text-white">${value}</a>`
+            );
+          }
+        });
+      }
+
+      const telPattern = /(0|\+84)\d{9}/g;
+      let tel = content.match(telPattern);
+      if (tel) {
+        tel = tel[0];
+        renderedContent = renderedContent.replace(
+          telPattern,
+          `<a href="tel:${tel}" target="_blank" class="text text-white">${tel}</a>`
+        );
       }
       createdAt = new Date(createdAt).getTime();
       let currentTime = new Date().getTime();
@@ -133,7 +130,6 @@ const renderBlogs = async (data) => {
       return `
       
       <section>
-          <div></div>
           <div>    
           <div class="d-flex align-items-center justify-content-between">
             <span class="user-name fs-2 text text-white fw-bold text-decoration-underline">${
@@ -142,11 +138,10 @@ const renderBlogs = async (data) => {
             <i class="text-success" >${timePost}</i>
             </div>
             <h3 class="title text fw-bold text-success">${title}</h3>
-            ${
-              content.includes("yout")
-                ? `<iframe width="560" height="315" src="https://www.youtube.com/embed/${contentLink}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen=""></iframe>`
-                : `<p class="text text-white fs-3 fw-bold text-break">${content}</p>`
-            }
+           <p class="text text-white fs-3 fw-bold text-break">
+             ${renderedContent}
+           </p>
+               
             <a href="#" class="text-success border border-success px-4 py-1 rounded-pill my-3 d-block" style="width:fit-content"># ${userId.name
               .toLocaleLowerCase()
               .split(" ")
@@ -160,7 +155,7 @@ const renderBlogs = async (data) => {
   content.insertAdjacentHTML("beforeend", blogs);
 };
 
-const renderHeader = async () => {
+export const renderHeader = async () => {
   const status = localStorage.getItem("login_token") ? true : false;
   if (!status) {
     document.querySelector(
@@ -207,17 +202,10 @@ const renderHeader = async () => {
     `;
     showProfile();
     const signOutBtn = document.querySelector(".sign-out");
-    signOutBtn.addEventListener("click", async () => {
-      const { accessToken } = JSON.parse(localStorage.getItem("login_token"));
-      httpClient.token = accessToken;
-      await httpClient.post("/auth/logout");
-      localStorage.removeItem("login_token");
-      window.location.href = "./components/login.html";
-    });
+    signOutBtn.addEventListener("click", handleLogout);
     const datePicker = document.querySelector(".date-picker");
     datePicker.addEventListener("change", (e) => {
       e.preventDefault();
-
       const currentDate = new Date();
       const datePicked =
         e.target.value +
@@ -255,18 +243,6 @@ const renderHeader = async () => {
         });
       }
     });
-  }
-};
-
-const handleScroll = () => {
-  if (
-    window.scrollY + window.innerHeight >=
-    (document.documentElement.scrollHeight * 80) / 100
-  ) {
-    window.removeEventListener("scroll", handleScroll);
-    params.page++;
-    params.limit = 7;
-    getBlogs(params);
   }
 };
 
