@@ -63,7 +63,7 @@ export const renderBlogs = async (data) => {
     .map(({ title, content, userId, createdAt }) => {
       let renderedContent = content;
       const ytPattern =
-        /^(?:https?:\/\/)?(?:(?:www|m)\.)?(youtu\.be\/|youtube\.com(?:\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=|shorts\/)|youtu\.be\/|embed\/|v\/|m\/|watch\?(?:[^=]+=[^&]+&)*?v=))([^"&?\/\s]{11})/gm;
+        /^(?:https?:\/\/)?(?:(?:www|m)\.)?(youtu\.be\/|youtube\.com(?:\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=|shorts\/)|youtu\.be\/|embed\/|v\/|m\/|watch\?(?:[^=]+=[^&]+&)*?v=))([^"&?\/\s]{11})(.*?)$/gm;
       let videoId = ytPattern.exec(content);
       if (videoId) {
         videoId = videoId[2];
@@ -205,19 +205,10 @@ export const renderHeader = async () => {
     signOutBtn.addEventListener("click", handleLogout);
     const datePicker = document.querySelector(".date-picker");
     datePicker.addEventListener("change", (e) => {
-      e.preventDefault();
       const currentDate = new Date();
-      const datePicked =
-        e.target.value +
-        " " +
-        currentDate.getHours() +
-        ":" +
-        currentDate.getMinutes() +
-        ":" +
-        currentDate.getSeconds();
+      const datePicked = e.target.value + " 00:00:00";
       const targetDate = new Date(datePicked).getTime();
       let seconds = (targetDate - currentDate.getTime()) / 1000;
-      console.log(targetDate);
       if (seconds < 0) {
         Swal.fire({
           position: "top-end",
